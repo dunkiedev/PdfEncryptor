@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PdfEncryptor": {
+      "commandName": "Project",
+      "commandLineArgs": "/AppConfiguration:SourceFolder \"C:\\Temp\\PDF\""
+    }
+  }
+}
