@@ -39,18 +39,34 @@ namespace PdfEncryptor
                     string fileName = Path.GetFileName(pdfFile);
                     string destinationFile = Path.Combine(outputFolder, fileName);
 
+                    bool fileCreated = false;
                     try
                     {
                         Console.Out.Write($"{fileName}... ");
                         EncryptPdfWithPassword(pdfFile, appConfig.SourcePassword,
                             destinationFile, appConfig.UserPassword, appConfig.OwnerPassword);
-                        Console.Out.WriteLine("Done");
+                        fileCreated = true;
+                        Console.Out.Write("Created... ");
+                        VerifyPdf(destinationFile, appConfig.UserPassword);
+                        WriteSuccessToConsole("Verified");
+
+                        if (appConfig.DeleteSourceFile)
+                        {
+                            File.Delete(pdfFile);
+                        }
                         successCount++;
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error! {ex.Message}");
-
+                        if (!fileCreated)
+                        {
+                            WriteErrorToConsole($"Error creating file! {ex.Message}");
+                        }
+                        else
+                        {
+                            WriteErrorToConsole($"Output file not verified! {ex.Message}");
+                        }
+                        
                         //might be that the destination file was created, even if empty - tidy up
                         File.Delete(destinationFile);
                     }
@@ -74,7 +90,7 @@ namespace PdfEncryptor
             Console.ReadKey();
         }
 
-        public static void EncryptPdfWithPassword(string sourceFile, string passwordSource, string destinationFile, string passwordUser, string passwordOwner)
+        private static void EncryptPdfWithPassword(string sourceFile, string passwordSource, string destinationFile, string passwordUser, string passwordOwner)
         {
             byte[] userPassword = Encoding.ASCII.GetBytes(passwordUser);
             byte[] ownerPassword = Encoding.ASCII.GetBytes(passwordOwner);
@@ -105,6 +121,18 @@ namespace PdfEncryptor
             {
                 pdfDoc?.Close();
             }
+        }
+
+        /// <summary>
+        /// Reads in the encrypted PDF with the supplied password to make sure it can be opened.
+        /// </summary>
+        private static void VerifyPdf(string pdfFile, string passwordUser)
+        {
+            byte[] userPassword = Encoding.ASCII.GetBytes(passwordUser);
+
+            ReaderProperties readerProperties = new ReaderProperties().SetPassword(userPassword);
+            using PdfReader reader = new PdfReader(pdfFile, readerProperties);
+            PdfDocument pdfDocument = new PdfDocument(reader);
         }
 
         /// <summary>
@@ -146,17 +174,31 @@ namespace PdfEncryptor
             return Path.Combine(sourceFolder, outputFolder);
         }
 
-        private static void WriteErrorToConsole(string message)
+        private static void WriteErrorToConsole(string message, bool writeLine = true)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Out.WriteLine(message);
+            if (writeLine)
+            {
+                Console.Out.WriteLine(message);
+            }
+            else
+            {
+                Console.Out.Write(message);
+            }
             Console.ResetColor();
         }
 
-        private static void WriteSuccessToConsole(string message)
+        private static void WriteSuccessToConsole(string message, bool writeLine = true)
         {
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.Out.WriteLine(message);
+            if (writeLine)
+            {
+                Console.Out.WriteLine(message);
+            }
+            else
+            {
+                Console.Out.Write(message);
+            }
             Console.ResetColor();
         }
     }

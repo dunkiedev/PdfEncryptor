@@ -19,5 +19,8 @@ namespace PdfEncryptor
 
         [JsonProperty("sourcePassword")]
         public string SourcePassword { get; set; }
+
+        [JsonProperty("deleteSourceFile")]
+        public bool DeleteSourceFile { get; set; }
     }
 }
